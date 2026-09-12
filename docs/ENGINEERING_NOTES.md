@@ -1,51 +1,69 @@
-# Engineering Notes
+# Engineering design notes
 
-## Ownership and deployment
+## Scope
 
-Abdulhamid Abdulkadir designed and built the complete Building Guard system. The completed physical unit was submitted to and deployed in a University of Ilorin laboratory.
+This document describes the published source revision. The original prototype was built by Abdulhamid Abdulkadir and is reported to be in use in the university laboratory. The supplied screenshot does not establish hardware validation of the revised firmware.
 
-## Verified submitted implementation
+## Detection logic
 
-- Motion detection using a PIR sensor
-- Physical-tamper detection using a vibration sensor
-- Lens-cover detection using an LDR
-- ESP32-C3 sensor controller
-- ESP32-CAM image capture
-- Telegram text and photographic alerts
-- Local network live stream
-- Web-dashboard manual capture
-- Per-event cooldowns
-- UART event message plus digital backup trigger
+### Motion
 
-## Refactor status
+PIR HIGH qualifies a motion event, subject to its cooldown. A continuously asserted input can produce another alert after cooldown; the logic is not rising-edge-only.
 
-The firmware in this repository is a cleaned revision derived from the working submitted code. It adds safer credential organization, clearer naming, periodic Wi-Fi recovery, smaller functions, and documentation.
+### Vibration
 
-Because the physical unit is held in the laboratory, the refactored revision has not yet completed regression testing on the installed hardware. The original implementation is evidenced by the Telegram screenshot; the revised code should be validated using the accompanying test plan before installation.
+The interrupt uses CHANGE and counts transitions spaced at least 15 ms apart. Two accepted edges in an evaluation window qualify an event. Two edges need not mean two impacts: both transitions of one sensor pulse can count. Validate the actual waveform and mounting.
 
-## Design decisions
+### Possible covering
 
-### Two-controller architecture
+Startup calibration waits three seconds and averages ten ADC readings spaced 100 ms apart. During monitoring, the baseline must exceed 150 raw ADC counts, and the reading must remain below 35% of baseline for three samples.
 
-The ESP32-C3 handles frequent sensor sampling and filtering. The ESP32-CAM handles camera capture, streaming, and image delivery. This separates sensor timing from camera memory and networking work.
+When no qualifying drop is present:
+`baseline = 0.98 × baseline + 0.02 × reading`
 
-### Dual camera trigger
+The baseline is held during qualifying darkness. Persistent covering may generate repeated alerts after cooldown. The LDR measures local illumination, not optical image obstruction or calibrated lux.
 
-The UART message communicates the event type. A separate digital pulse provides a backup capture request. If the UART message is lost, the camera may use its default event caption; this condition is included in the test plan.
+## Firmware parameters
 
-### Adaptive cover detection
+| Parameter | Value | Meaning |
+| --- | --- | --- |
+| SENSOR_SAMPLE_MS | 100 ms | Nominal polling interval |
+| ALERT_COOLDOWN_MS | 10,000 ms | Per-type C3 cooldown |
+| VIBRATION_DEBOUNCE_MS | 15 ms | Minimum edge spacing |
+| VIBRATION_WINDOW_MS | 800 ms | Evaluation window |
+| VIBRATION_MIN_HITS | 2 | Accepted edges required |
+| LDR_EMA_ALPHA | 0.02 | Baseline weight |
+| LDR_COVER_RATIO | 0.35 | Relative threshold |
+| LDR_DAYLIGHT_FLOOR | 150 | Raw ADC baseline floor |
+| LDR_CONFIRM_READS | 3 | Consecutive qualifying readings |
+| CAMERA_TRIGGER_MS | 500 ms | Nominal trigger pulse |
+| CAPTURE_COOLDOWN_MS | 8,000 ms | Camera automatic capture interval |
+| WIFI_RETRY_MS | 15,000 ms | Reconnection attempt interval |
 
-The LDR baseline follows gradual changes slowly. A rapid, sustained drop relative to the baseline is treated as a probable obstruction. Cover detection is disabled when the baseline is already dark, reducing night-time false positives.
+Synchronous network calls and UART reads can delay processing. Three samples do not establish a guaranteed 300 ms response.
 
-### Vibration filtering
+## Board interface
 
-An interrupt counts debounced edges. The main loop confirms a tamper event only when the configured number of edges occurs in a fixed time window.
+UART is 115200 baud, 8N1, with newline-terminated ASCII commands.
 
-## Production considerations
+| Command | Camera caption |
+| --- | --- |
+| MOTION | ALERT: Motion detected |
+| TAMPER | TAMPER ALERT: Physical disturbance detected |
+| COVERED | TAMPER ALERT: Camera lens covered |
 
-- Replace insecure TLS mode with verified certificates.
-- Protect the local stream with authentication before exposing it beyond a trusted network.
-- Add persistent offline event storage.
-- Add brownout, battery, and camera-health monitoring.
-- Validate power integrity and decoupling under Wi-Fi transmission current peaks.
+C3 TX GPIO6 connects to camera RX GPIO3. Camera TX GPIO1 connects to C3 RX GPIO7. Camera Serial also emits diagnostic output; there is no structured acknowledgement protocol.
 
+C3 GPIO10 drives camera GPIO2 as an additional capture request. This rising edge carries no event type, so its caption can be the current/default caption. UART and trigger processing do not implement transactional deduplication; test their interaction.
+
+## Concurrency and failure behavior
+
+The C3 evaluates motion, vibration and cover conditions in that order, with independent cooldowns. The camera stores one pending flag and one caption, not a queue. Closely spaced commands can replace captions and do not guarantee one photograph per event.
+
+Streaming, manual capture and automatic capture share camera/server resources. Concurrent operation needs testing.
+
+Offline notifications may be skipped and are not persistently replayed. Wi-Fi recovery attempts do not guarantee delivery. Measure supply integrity during camera flash and wireless transmission rather than assuming the diagram establishes a power budget.
+
+## Release requirements
+
+Record successful builds and hardware test results before installing the revision. Add certificate verification, web authentication and durable event handling before broader deployment. Keep credentials outside tracked source files. Detection accuracy, latency and uptime require repeatable measurements and retained evidence.
