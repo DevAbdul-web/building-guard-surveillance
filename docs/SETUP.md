@@ -29,7 +29,7 @@ Use an Arduino-compatible ESP32 toolchain with the board target matching each ph
 | controller/controller.ino | Arduino ESP32 core, UniversalTelegramBot, ArduinoJson |
 | camera/camera.ino | Arduino ESP32 core with esp_camera and esp_http_server |
 
-Core/library versions and board settings have not been pinned or build-validated. Record them with the first successful builds.
+The core and library versions, board settings and compiler output should be recorded with each build to support reproducibility.
 
 ## Configuration and upload
 
@@ -68,4 +68,4 @@ Use the ESP32-CAM address, not the C3 address, from a reachable local network. T
 | Stream blocks capture | Shared server/camera resources; test concurrent requests |
 | Compilation failure | Exact compiler error, selected board, core and library versions |
 
-Complete the validation plan before replacing the deployed firmware.
+The validation plan should be used for regression checks whenever changes are made to the deployed firmware.
