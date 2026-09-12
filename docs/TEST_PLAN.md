@@ -1,10 +1,10 @@
 # Verification and validation plan
 
-## Current status
+## Purpose and test records
 
-All tests below are pending for the published revision. The prototype screenshot is supporting evidence, not a completed regression report.
+The original integrated prototype was tested before submission to the University of Ilorin laboratory. The procedures below are provided for repeatable commissioning and regression checks following firmware or hardware changes. Results should be recorded for the specific revision and hardware configuration being evaluated.
 
-Record firmware commit, board/sensor variants, supply, toolchain/library versions, network conditions, date and tester. Preserve timestamped serial and Telegram evidence.
+The firmware commit, board and sensor variants, supply, toolchain versions, network conditions, date and tester should be recorded. Timestamped serial logs and Telegram evidence should be retained.
 
 ## Test matrix
 
@@ -49,4 +49,4 @@ Known limitations require characterization, not an assumed pass. Repeat trials u
 
 ## Release decision
 
-Record both successful builds and functional hardware results before declaring the revision validated. Review concurrent events, power integrity and network failures explicitly. Retain the installed firmware/source for recovery.
+For each release, build and functional test results should be recorded. Concurrent events, power integrity and network recovery should be reviewed. A recoverable copy of the installed firmware and source should be retained.
