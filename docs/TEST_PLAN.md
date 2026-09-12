@@ -1,29 +1,52 @@
-# Building Guard Hardware Test Plan
+# Verification and validation plan
 
-Record the firmware commit, date, tester, supply voltage, network condition, and observed result for every run.
+## Current status
 
-| ID | Test | Procedure | Expected result |
-|---|---|---|---|
-| BG-01 | Startup | Power both controllers with sensors unobstructed | Controllers initialize, LDR calibrates, status heartbeat begins, and online message is sent |
-| BG-02 | Motion | Move through the PIR field of view | Motion text and correctly captioned photograph reach Telegram |
-| BG-03 | Vibration rejection | Tap the enclosure once lightly | A single unconfirmed edge does not create a tamper alert |
-| BG-04 | Physical tamper | Produce two or more valid vibration edges inside the configured window | Physical-tamper text and photograph reach Telegram |
-| BG-05 | Gradual darkness | Reduce room lighting slowly | Baseline adapts without producing a lens-cover alarm |
-| BG-06 | Lens cover | Cover the LDR/camera rapidly for the required consecutive samples | Lens-cover text and correctly captioned photograph reach Telegram |
-| BG-07 | Dark-room behavior | Start with ambient value below the daylight floor | Cover classification remains disabled and does not create repeated false alarms |
-| BG-08 | Cooldown | Repeat the same event inside ten seconds | Duplicate event is suppressed |
-| BG-09 | Independent cooldown | Trigger two different event types close together | Each event uses its own cooldown and can be reported |
-| BG-10 | Live stream | Open the controller address from the same network | Browser displays the camera stream |
-| BG-11 | Manual capture | Select Capture and Send to Telegram | A manually captioned photograph reaches Telegram |
-| BG-12 | Wi-Fi recovery | Disconnect and restore Wi-Fi | Local sensing continues and both controllers reconnect automatically |
-| BG-13 | Event labeling | Trigger each sensor separately | Photograph caption matches MOTION, TAMPER, or COVERED |
-| BG-14 | Restart | Restart both controllers | System returns to monitoring without unsafe output behavior |
+All tests below are pending for the published revision. The prototype screenshot is supporting evidence, not a completed regression report.
 
-## Evidence to retain
+Record firmware commit, board/sensor variants, supply, toolchain/library versions, network conditions, date and tester. Preserve timestamped serial and Telegram evidence.
 
-- Serial logs for every test
-- Telegram screenshots with timestamps
-- Short videos of the physical trigger and received notification
-- Photograph of the installed device
-- Notes describing deviations and corrective actions
+## Test matrix
 
+| ID | Procedure | Acceptance or observation |
+| --- | --- | --- |
+| BG-01 | Compile both sketches | Successful builds with recorded versions and board settings |
+| BG-02 | Boot with LDR exposed | Calibration completes and both boards initialize |
+| BG-03 | Trigger PIR alone | Motion text and matching photograph received |
+| BG-04 | Observe vibration output during one tap | Record both transitions; distinguish edges from physical impacts |
+| BG-05 | Apply one accepted edge, then two within one 800 ms window | One edge rejected; two qualify |
+| BG-06 | Dim lighting gradually | Record baseline tracking and any false cover alerts |
+| BG-07 | Rapidly obscure LDR in sufficient light | Cover classification after three qualifying samples; retain output |
+| BG-08 | Cover lens while leaving LDR exposed | Characterize missed obstruction and placement limitations |
+| BG-09 | Boot below daylight floor | Cover classification disabled; other inputs remain evaluated |
+| BG-10 | Repeat same event within 10 seconds | Controller repeat suppressed inside cooldown |
+| BG-11 | Hold motion/cover beyond cooldown | Record repeated events and timing |
+| BG-12 | Trigger different sensors closely together | Compare controller events, photograph count and caption; quantify losses |
+| BG-13 | Trigger camera without UART command | Capture requested; record default/current caption |
+| BG-14 | Send UART and trigger together | Check duplicate, delayed or incorrectly captioned photographs |
+| BG-15 | Open camera dashboard, stream and manual capture | Record operation and any request blocking |
+| BG-16 | Trigger automatic capture while streaming | Record resource conflicts, stalls and recovery |
+| BG-17 | Remove and restore Wi-Fi | Record reconnection, skipped notifications and sensing delays |
+| BG-18 | Restart both boards, then each separately | Record boot reliability and link recovery |
+| BG-19 | Measure supply during flash and transmission | Record voltage minimum and resets against exact board requirements |
+| BG-20 | Run sustained monitoring | Record duration, false alerts, missed events and resets |
+
+Known limitations require characterization, not an assumed pass. Repeat trials under recorded conditions before making performance claims.
+
+## Result template
+
+- Test ID:
+- Date / tester:
+- Firmware commit:
+- Hardware / toolchain:
+- Preconditions:
+- Procedure / repetitions:
+- Expected behavior:
+- Observed behavior:
+- Result: PASS / FAIL / CHARACTERIZED / BLOCKED
+- Measurements / evidence paths:
+- Deviations / follow-up:
+
+## Release decision
+
+Record both successful builds and functional hardware results before declaring the revision validated. Review concurrent events, power integrity and network failures explicitly. Retain the installed firmware/source for recovery.
