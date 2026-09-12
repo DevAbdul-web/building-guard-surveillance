@@ -2,7 +2,7 @@
 
 ## Scope
 
-This document describes the published source revision. The original prototype was built by Abdulhamid Abdulkadir and is reported to be in use in the university laboratory. The supplied screenshot does not establish hardware validation of the revised firmware.
+The complete Building Guard prototype was designed, built and tested by Abdulhamid Abdulkadir before submission to the University of Ilorin laboratory, where it is being used. The detection logic, communication interfaces and operating parameters of the repository firmware are documented below. Subsequent firmware cleanup and Wi-Fi recovery improvements are included in the published code.
 
 ## Detection logic
 
@@ -66,4 +66,4 @@ Offline notifications may be skipped and are not persistently replayed. Wi-Fi re
 
 ## Release requirements
 
-Record successful builds and hardware test results before installing the revision. Add certificate verification, web authentication and durable event handling before broader deployment. Keep credentials outside tracked source files. Detection accuracy, latency and uptime require repeatable measurements and retained evidence.
+Build settings and regression results should be recorded whenever firmware changes are introduced. Certificate verification, web authentication and durable event handling are planned for broader deployment. Credentials should be kept outside tracked source files. Quantitative accuracy, latency and uptime claims should be supported by repeatable measurements and retained evidence.
