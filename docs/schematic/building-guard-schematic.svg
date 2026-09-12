@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1050" viewBox="0 0 1600 1050">
+  <defs>
+    <style>
+      .bg{fill:#f8fafc}.panel{fill:#fff;stroke:#0f172a;stroke-width:3}.sensor{fill:#ecfeff;stroke:#0891b2;stroke-width:3}
+      .camera{fill:#f0fdf4;stroke:#16a34a;stroke-width:3}.power{fill:#fff7ed;stroke:#ea580c;stroke-width:3}
+      .note{fill:#fffbeb;stroke:#d97706;stroke-width:2}.wire{fill:none;stroke:#334155;stroke-width:4}.pwr{fill:none;stroke:#dc2626;stroke-width:4}
+      .gnd{fill:none;stroke:#111827;stroke-width:4}.sig{fill:none;stroke:#2563eb;stroke-width:4}.uart{fill:none;stroke:#7c3aed;stroke-width:4}
+      text{font-family:Inter,Arial,sans-serif;fill:#0f172a}.title{font-size:34px;font-weight:700}.sub{font-size:18px;fill:#475569}
+      .h{font-size:24px;font-weight:700}.t{font-size:18px}.small{font-size:15px;fill:#475569}.pin{font-size:17px;font-weight:700}
+    </style>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/></marker>
+    <marker id="arrowPurple" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#7c3aed"/></marker>
+  </defs>
+
+  <rect class="bg" width="1600" height="1050"/>
+  <text x="70" y="65" class="title">Building Guard Surveillance System — Schematic Diagram</text>
+  <text x="70" y="98" class="sub">ESP32-C3 sensor controller, ESP32-CAM interface, power distribution and signal connections</text>
+
+  <rect x="600" y="190" width="400" height="560" rx="18" class="panel"/>
+  <text x="800" y="235" text-anchor="middle" class="h">ESP32-C3 Super Mini</text>
+  <text x="800" y="265" text-anchor="middle" class="small">Sensor controller + Telegram text alerts</text>
+
+  <rect x="80" y="180" width="310" height="125" rx="14" class="sensor"/>
+  <text x="235" y="220" text-anchor="middle" class="h">PIR motion sensor</text>
+  <text x="110" y="260" class="t">OUT</text><text x="315" y="260" class="pin">GPIO 5</text>
+
+  <rect x="80" y="355" width="310" height="125" rx="14" class="sensor"/>
+  <text x="235" y="395" text-anchor="middle" class="h">Vibration sensor</text>
+  <text x="110" y="435" class="t">DO / OUT</text><text x="315" y="435" class="pin">GPIO 2</text>
+
+  <rect x="80" y="530" width="310" height="180" rx="14" class="sensor"/>
+  <text x="235" y="570" text-anchor="middle" class="h">LDR divider</text>
+  <text x="110" y="610" class="t">3.3 V — LDR — ADC node</text>
+  <text x="110" y="645" class="t">ADC node — 10 kΩ — GND</text>
+  <text x="315" y="682" class="pin">GPIO 3 (ADC)</text>
+
+  <rect x="1210" y="275" width="320" height="330" rx="18" class="camera"/>
+  <text x="1370" y="320" text-anchor="middle" class="h">AI Thinker ESP32-CAM</text>
+  <text x="1370" y="350" text-anchor="middle" class="small">Camera + stream + Telegram photos</text>
+  <text x="1245" y="405" class="t">U0R / GPIO 3 (RX)</text>
+  <text x="1245" y="455" class="t">U0T / GPIO 1 (TX)</text>
+  <text x="1245" y="505" class="t">GPIO 2 (trigger)</text>
+  <text x="1245" y="555" class="t">5 V / GND</text>
+
+  <rect x="610" y="820" width="380" height="130" rx="14" class="power"/>
+  <text x="800" y="860" text-anchor="middle" class="h">Regulated 5 V supply</text>
+  <text x="800" y="895" text-anchor="middle" class="t">Common ground for both boards and sensors</text>
+  <text x="800" y="925" text-anchor="middle" class="small">470 µF bulk + 100 nF ceramic near ESP32-CAM recommended</text>
+
+  <path d="M390 255 H600" class="sig" marker-end="url(#arrowBlue)"/><text x="465" y="242" class="pin">GPIO 5</text>
+  <path d="M390 430 H600" class="sig" marker-end="url(#arrowBlue)"/><text x="465" y="417" class="pin">GPIO 2</text>
+  <path d="M390 665 H600" class="sig" marker-end="url(#arrowBlue)"/><text x="455" y="652" class="pin">GPIO 3 ADC</text>
+
+  <path d="M1000 390 H1210" class="uart" marker-end="url(#arrowPurple)"/><text x="1015" y="375" class="pin">GPIO 6 TX → CAM RX</text>
+  <path d="M1210 440 H1000" class="uart" marker-end="url(#arrowPurple)"/><text x="1010" y="470" class="pin">GPIO 7 RX ← CAM TX</text>
+  <path d="M1000 510 H1210" class="sig" marker-end="url(#arrowBlue)"/><text x="1015" y="545" class="pin">GPIO 10 → CAM GPIO 2</text>
+
+  <path d="M720 820 V750" class="pwr"/><path d="M880 820 V650 H1370 V605" class="pwr"/>
+  <text x="680" y="800" class="pin" fill="#dc2626">5 V</text><text x="1385" y="650" class="pin" fill="#dc2626">5 V</text>
+  <path d="M650 950 V980 H1440 V605" class="gnd"/><path d="M800 750 V980" class="gnd"/>
+  <text x="810" y="975" class="pin">GND</text>
+
+  <rect x="1030" y="690" width="500" height="225" rx="14" class="note"/>
+  <text x="1060" y="730" class="h">Verification notes</text>
+  <text x="1060" y="768" class="small">• PIR VCC: follow the exact module rating</text>
+  <text x="1060" y="800" class="small">• Sensor outputs into the C3 must not exceed 3.3 V</text>
+  <text x="1060" y="832" class="small">• GPIO 0 status LED needs a current-limiting resistor</text>
+  <text x="1060" y="864" class="small">• UART lines are crossed and all grounds are common</text>
+  <text x="1060" y="897" class="small">• Verify connector order and fitted component values physically</text>
+
+  <line x1="70" y1="1010" x2="1530" y2="1010" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="70" y="1038" class="small">Signal: blue • UART: purple • 5 V: red • Ground: black • Firmware reference: controller.ino and camera.ino</text>
+</svg>

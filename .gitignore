@@ -1,0 +1,15 @@
+# Local credentials
+**/secrets.h
+
+# Build outputs
+.pio/
+.vscode/
+build/
+*.bin
+*.elf
+*.map
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+
