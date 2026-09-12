@@ -1,168 +1,97 @@
 # Building Guard
+## Embedded surveillance and tamper monitoring
 
-Multi-sensor surveillance and camera-tamper detection system with real-time Telegram image alerts.
+Building Guard combines PIR motion sensing, vibration monitoring and light-based obstruction detection with ESP32-CAM image capture and Telegram notifications.
 
-## Overview
+Designed and built by **Abdulhamid Abdulkadir**, Electrical and Electronics Engineering graduate, University of Ilorin. The author reports that the completed prototype was submitted to the university laboratory and is in use there.
 
-Building Guard is an individually developed embedded surveillance system for detecting motion, physical disturbance, and attempts to cover a camera. An ESP32-C3 reads the sensors and classifies events, while an ESP32-CAM captures evidence, provides a local live stream, and sends alert photographs through Telegram.
+## Project status
 
-The completed prototype was submitted to and deployed in a University of Ilorin laboratory. The repository documents the tested system and a security-focused firmware refactor. The refactored revision must be revalidated on the deployed hardware before it replaces the submitted firmware.
+The Telegram screenshot below documents output from the original prototype. The published firmware is a revised implementation derived from the submitted code. Compilation and hardware regression results for this revision have not yet been recorded. No measured detection accuracy, notification latency or uptime is claimed.
 
-The repository includes a verified Telegram lens-cover alert, the original submitted schematic, and a clean schematic diagram derived from the firmware pin assignments.
+## Architecture
 
-## Problem
-
-Conventional low-cost cameras may record an incident without warning the owner when the camera is moved, struck, or deliberately covered. Building Guard combines surveillance with independent tamper sensors so that interference with the camera becomes an alert event.
-
-## Verified capabilities
-
-- PIR motion detection
-- Interrupt-based vibration sensing with debounce and pulse-window confirmation
-- Adaptive LDR baseline for detecting a sudden camera-cover event
-- Separate cooldowns for motion, vibration, and cover alerts
-- ESP32-C3 to ESP32-CAM command and trigger link
-- Automatic JPEG capture after a verified event
-- Telegram text and photographic alerts
-- Local browser-based live video stream
-- Manual image capture from the local dashboard
-- Status heartbeat and event-specific LED patterns
-- Automatic Wi-Fi reconnection in the refactored controller
-
-## System architecture
+| Subsystem | Responsibility |
+| --- | --- |
+| ESP32-C3 | Sensor sampling, event qualification, cooldowns and Telegram text alerts |
+| ESP32-CAM | Camera capture, Telegram photographs, local streaming and manual capture |
+| PIR | Motion indication |
+| Vibration sensor | Physical-disturbance indication |
+| LDR divider | Light measurement used to infer possible covering |
+| UART + digital trigger | Event caption command and additional capture request |
 
 ```mermaid
-flowchart LR
-    PIR[PIR sensor] --> C3[ESP32-C3 controller]
-    VIB[Vibration sensor] --> C3
-    LDR[LDR cover sensor] --> C3
-    C3 -->|UART event command| CAM[ESP32-CAM]
-    C3 -->|Digital backup trigger| CAM
-    CAM --> STREAM[Local live stream]
-    CAM --> TG[Telegram image alert]
-    C3 --> TG2[Telegram text alert]
+flowchart TD
+    S["PIR · vibration · LDR"] --> C["ESP32-C3"]
+    C -->|"UART command + trigger"| M["ESP32-CAM"]
+    C -->|"Text"| T["Telegram"]
+    M -->|"Photograph"| T
+    M --> W["Local web dashboard"]
 ```
 
-## Event logic
+The boards separate sensor and camera workloads. Some network and camera operations are synchronous, so polling intervals are nominal scheduling targets rather than hard real-time guarantees.
 
-### Motion
+## Main functions
 
-A PIR event produces a motion alert, requests a camera capture, and starts the motion-specific cooldown.
+- Motion detection through an active-high PIR input.
+- Vibration qualification using debounced edges within a time window.
+- Possible cover detection using an adaptive light baseline.
+- Independent controller cooldowns for each event type.
+- Telegram text and photographic notifications over Wi-Fi.
+- Local video stream and browser-triggered capture.
+- Periodic Wi-Fi reconnection attempts.
 
-### Physical tamper
+## Schematic
 
-The vibration input is handled by an interrupt. Closely spaced edges caused by contact bounce are rejected, and a tamper event is confirmed only when the configured number of edges occurs inside the evaluation window.
+![Building Guard schematic diagram](docs/schematic/building-guard-schematic.png)
 
-### Camera covering
+[Editable SVG](docs/schematic/building-guard-schematic.svg) · [Original drawing](docs/schematic/original-submitted-schematic.jpg)
 
-The controller establishes an ambient-light baseline during startup and updates it slowly as lighting changes. A sudden reduction below a fraction of that baseline is treated as suspicious only when:
+The diagram summarizes module connections. Verify physical connector order, module variants and fitted component values against the installed unit.
 
-1. the normal baseline is bright enough for cover detection to be meaningful;
-2. the reduction is large enough; and
-3. the condition persists for several consecutive readings.
+## Demonstration evidence
 
-This relative approach is more robust than using one fixed light threshold for every room.
+<img src="docs/images/telegram-tamper-alert.jpg" alt="Prototype Telegram photograph and tamper notification" width="560">
 
-## Hardware
+The screenshot demonstrates notification output; it is not a detection-accuracy benchmark. A hardware demonstration video and installation photographs remain pending laboratory access.
 
-- ESP32-C3 Super Mini
-- AI Thinker ESP32-CAM
-- PIR motion sensor
-- Digital vibration sensor
-- LDR and 10 kOhm voltage-divider resistor
-- Status LED
-- 5 V regulated supply
-- Decoupling components
+## Setup
 
-![Building Guard schematic diagram](docs/schematic/building-guard-schematic.svg)
+Follow [Setup and commissioning](docs/SETUP.md) for the wiring table, private configuration, separate board builds and local interface. Then execute the [test plan](docs/TEST_PLAN.md) before replacing the deployed firmware.
 
-The original submitted schematic is preserved at [`docs/schematic/original-submitted-schematic.jpg`](docs/schematic/original-submitted-schematic.jpg).
+## Documentation
+
+| Document | Purpose |
+| --- | --- |
+| [Setup](docs/SETUP.md) | Hardware connections, build workflow and troubleshooting |
+| [Engineering notes](docs/ENGINEERING_NOTES.md) | Detection logic, parameters, protocol and design limitations |
+| [Validation plan](docs/TEST_PLAN.md) | Test procedures, acceptance criteria and result records |
+| [Evidence checklist](docs/EVIDENCE_CHECKLIST.md) | Available evidence and remaining captures |
 
 ## Repository structure
 
-```text
-firmware/
-  controller/
-    controller.ino
-    secrets.example.h
-  camera/
-    camera.ino
-    secrets.example.h
-docs/
-  images/
-  schematic/
-  EVIDENCE_CHECKLIST.md
-  TEST_PLAN.md
-  ENGINEERING_NOTES.md
-```
+- `firmware/controller/`: C3 sketch and configuration template.
+- `firmware/camera/`: camera sketch and configuration template.
+- `docs/schematic/`: schematic assets.
+- `docs/images/`: demonstration evidence.
+- `docs/`: engineering documentation.
 
-## Configuration
+## Known limitations
 
-Each firmware directory contains a `secrets.example.h`.
+- The LDR detects light changes at its location, not lens obstruction directly. Room-light changes may resemble covering; a covered lens with an exposed LDR may be missed.
+- The camera has one pending capture slot and an eight-second cooldown. Closely spaced events can replace captions or share one capture.
+- Telegram requires internet access. There is no persistent offline event queue.
+- TLS certificate verification and web authentication are not implemented. Keep the web interface on a trusted local network.
+- No GSM fallback, machine-learning model or remote arm/disarm interface is implemented.
 
-1. Copy it to `secrets.h`.
-2. Add the Wi-Fi network, Telegram bot token, and authorized chat ID.
-3. Never commit `secrets.h`.
-4. Rotate a bot token immediately if it has ever been published.
+## Next engineering milestones
 
-## Firmware dependencies
+1. Record reproducible build settings and hardware regression results.
+2. Validate concurrent events, UART/trigger interactions and supply integrity.
+3. Implement verified TLS, authenticated web access and queued events.
+4. Measure false alerts, notification latency and sustained operation.
 
-Controller:
-
-- WiFi
-- WiFiClientSecure
-- UniversalTelegramBot
-- ArduinoJson
-
-Camera:
-
-- esp32-camera
-- WiFi
-- WiFiClientSecure
-- ESP HTTP Server
-
-## Evidence and current status
-
-The supplied Telegram screenshot shows a real image captured by the ESP32-CAM and a corresponding lens-cover warning. The physical unit remains in the school laboratory, where a full demonstration video will be recorded when access becomes available.
-
-![Telegram motion and tamper alert](docs/images/telegram-tamper-alert.jpg)
-
-The refactor preserves the tested architecture while improving credential separation and reconnection behavior. See [ENGINEERING_NOTES.md](docs/ENGINEERING_NOTES.md) for the distinction between tested functions and changes awaiting hardware revalidation.
-
-## Testing
-
-The hardware test plan covers:
-
-- motion alert and image delivery;
-- confirmed vibration alert;
-- sudden lens-cover detection;
-- gradual ambient-light change without a false alarm;
-- alert cooldown behavior;
-- live streaming and manual capture;
-- Wi-Fi loss and recovery; and
-- controller-to-camera event labeling.
-
-See [TEST_PLAN.md](docs/TEST_PLAN.md).
-
-## Limitations
-
-- Telegram delivery requires Wi-Fi and internet access.
-- The live stream is available only on the local network in the submitted implementation.
-- `setInsecure()` is retained for compatibility and should be replaced with certificate validation in a production system.
-- There is no GSM fallback, cloud event database, AI model, or Telegram command receiver in the verified version.
-- The digital trigger is a backup capture request; the UART command carries the event type.
-
-## Future work
-
-- Hardware validation of the refactored firmware
-- Non-volatile event queue during internet failure
-- Authenticated remote arm and disarm commands
-- Secure TLS certificate validation
-- Camera-health monitoring
-- Local event timestamps and persistent logs
-- Enclosure-open switch and backup-power monitoring
-
-## Author
+## Author and license
 
 **Abdulhamid Abdulkadir**  
-Electrical and Electronics Engineering graduate  
-GitHub: [DevAbdul-web](https://github.com/DevAbdul-web)
+[GitHub](https://github.com/DevAbdul-web) · [License](LICENSE)
